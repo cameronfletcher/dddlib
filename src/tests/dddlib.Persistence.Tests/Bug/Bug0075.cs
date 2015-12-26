@@ -11,43 +11,76 @@ namespace dddlib.Persistence.Tests.Bug
     public class Bug0075
     {
         [Fact]
-        public void ShouldThrow()
+        public void ShouldThrowOnObviousHandlerNameMismatch()
         {
             var repository = new MemoryEventStoreRepository();
-            var registrationNumber = "abc";
-            var car = new Car(registrationNumber);
+            var handler = new ObviousMisnamedHandler("abc");
 
-            repository.Save(car);
+            repository.Save(handler);
 
             // NOTE (Cameron): This should throw because we're trying to load an aggregate with a natural key of type string using a value object.
             ////Assert.Throws<ArgumentException>(() => repository.Load(registration));
         }
 
-        public class Car : AggregateRoot
+        [Fact]
+        public void ShouldThrowOnSubtleHandlerNameMismatch()
         {
-            public Car(string registrationNumber)
-            {
-                Guard.Against.Null(() => registrationNumber);
+            var repository = new MemoryEventStoreRepository();
+            var handler = new SubtleMisnamedHandler("abc");
 
-                this.Apply(new CarRegistered { RegistrationNumber = registrationNumber });
+            repository.Save(handler);
+
+            // NOTE (Cameron): This should throw because we're trying to load an aggregate with a natural key of type string using a value object.
+            ////Assert.Throws<ArgumentException>(() => repository.Load(registration));
+        }
+
+        public class ObviousMisnamedHandler : AggregateRoot
+        {
+            public ObviousMisnamedHandler(string naturalKey)
+            {
+                Guard.Against.Null(() => naturalKey);
+
+                this.Apply(new HandlerCreated { NaturalKey = naturalKey });
             }
 
-            internal Car()
+            internal ObviousMisnamedHandler()
             {
             }
 
             [NaturalKey]
-            public string RegistrationNumber { get; private set; }
+            public string NaturalKey { get; private set; }
 
-            private void Apply(CarRegistered @event)
+            private void Consume(HandlerCreated @event)
             {
-                this.RegistrationNumber = @event.RegistrationNumber;
+                this.NaturalKey = @event.NaturalKey;
             }
         }
 
-        public class CarRegistered
+        public class SubtleMisnamedHandler : AggregateRoot
         {
-            public string RegistrationNumber { get; set; }
+            public SubtleMisnamedHandler(string naturalKey)
+            {
+                Guard.Against.Null(() => naturalKey);
+
+                this.Apply(new HandlerCreated { NaturalKey = naturalKey });
+            }
+
+            internal SubtleMisnamedHandler()
+            {
+            }
+
+            [NaturalKey]
+            public string NaturalKey { get; private set; }
+
+            private void Apply(HandlerCreated @event)
+            {
+                this.NaturalKey = @event.NaturalKey;
+            }
+        }
+
+        public class HandlerCreated
+        {
+            public string NaturalKey { get; set; }
         }
     }
 }

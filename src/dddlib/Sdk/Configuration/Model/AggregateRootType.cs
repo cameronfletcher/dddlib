@@ -49,12 +49,6 @@ namespace dddlib.Sdk.Configuration.Model
         public IEventDispatcher EventDispatcher { get; private set; }
 
         /// <summary>
-        /// Gets the natural key serializer.
-        /// </summary>
-        /// <value>The natural key serializer.</value>
-        public object NaturalKeySerializer { get; private set; }
-
-        /// <summary>
         /// Gets a value indicating whether events should be persisted.
         /// </summary>
         /// <value>Returns <c>true</c> if events should be persisted; otherwise, <c>false</c>.</value>

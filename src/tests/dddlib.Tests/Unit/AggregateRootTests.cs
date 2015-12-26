@@ -164,6 +164,10 @@ namespace dddlib.Tests.Unit
             aggregateRoot.ThingsThatHappened.Should().HaveCount(2);
         }
 
+        public class AggregateCreated
+        {
+        }
+
         public class SomethingHappened
         {
         }
@@ -186,6 +190,11 @@ namespace dddlib.Tests.Unit
 
         public class ChangeableAggregate : AggregateRoot
         {
+            public ChangeableAggregate()
+            {
+                this.Apply(new AggregateCreated());
+            }
+
             [NaturalKey]
             public string NaturalKey
             {
@@ -197,6 +206,11 @@ namespace dddlib.Tests.Unit
             public void ApplyEvent(object change)
             {
                 this.Apply(change);
+            }
+
+            private void Handle(AggregateCreated @event)
+            {
+                // NOTE (Cameron): Every aggregate should have a handle on it's initial event or an exception will be thrown.
             }
 
             private void Handle(SomethingHappened @event)
@@ -236,6 +250,11 @@ namespace dddlib.Tests.Unit
 
         public class LifecycleAggregate : AggregateRoot
         {
+            public LifecycleAggregate()
+            {
+                this.Apply(new AggregateCreated());
+            }
+
             [NaturalKey]
             public string NaturalKey
             {
@@ -250,6 +269,11 @@ namespace dddlib.Tests.Unit
             public void DoSomething()
             {
                 this.Apply(new SomethingHappened());
+            }
+
+            private void Handle(AggregateCreated @event)
+            {
+                // NOTE (Cameron): Every aggregate should have a handle on it's initial event or an exception will be thrown.
             }
 
             private void Handle(LifecycleEnded @event)

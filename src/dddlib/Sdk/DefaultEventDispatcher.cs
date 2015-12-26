@@ -18,7 +18,7 @@ namespace dddlib.Sdk
         Any exceptions? - possibly of type RuntimeException (consider).
         Consider what to do with multiple base classes with different dispatchers.
         Add ability to configure method name.
-        Duplicate for application against momento.
+        Duplicate for application against memento.
         Change to operate on any type, not just AggregateRoot.  */
 
     /// <summary>
@@ -78,6 +78,16 @@ namespace dddlib.Sdk
                     handler.Invoke(target, @event);
                 }
             }
+        }
+
+        /// <summary>
+        /// Determines whether this event dispatcher can dispatch the specified event type.
+        /// </summary>
+        /// <param name="eventType">Type of the event.</param>
+        /// <returns>Returns <c>true</c> if the event can be dispatched; otherwise <c>false</c>.</returns>
+        public bool CanDispatch(Type eventType)
+        {
+            return this.handlers.ContainsKey(eventType);
         }
 
         private static Dictionary<Type, List<Action<object, object>>> GetHandlers(Type type, string methodName, BindingFlags bindingFlags)

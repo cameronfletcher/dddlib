@@ -151,6 +151,16 @@ To fix this issue:
 
             this.ThrowIfLifecycleEnded(@event.GetType().Name);
 
+            if (this.Revision == 0 &&
+                !this.typeInformation.EventDispatcher.CanDispatch(@event.GetType()))
+            {
+                throw new RuntimeException(
+                    string.Format(
+                        "Unable to dispatch the initial event of type '{0}' to the aggregate root of type '{1}' as there is no corresponding event handler method.",
+                        @event.GetType(),
+                        this.GetType()));
+            }
+
             this.Apply(@event, isNew: true);
         }
 

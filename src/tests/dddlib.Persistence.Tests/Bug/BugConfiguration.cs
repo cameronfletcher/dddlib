@@ -12,7 +12,8 @@ namespace dddlib.Persistence.Tests.Bug
         {
             configure.AggregateRoot<Bug0043.Car>().ToReconstituteUsing(() => new Bug0043.Car());
             configure.AggregateRoot<Bug0064.Thing>().ToReconstituteUsing(() => new Bug0064.Thing());
-            configure.AggregateRoot<Bug0075.Car>().ToReconstituteUsing(() => new Bug0075.Car());
+            configure.AggregateRoot<Bug0075.ObviousMisnamedHandler>().ToReconstituteUsing(() => new Bug0075.ObviousMisnamedHandler());
+            configure.AggregateRoot<Bug0075.SubtleMisnamedHandler>().ToReconstituteUsing(() => new Bug0075.SubtleMisnamedHandler());
         }
     }
 }
