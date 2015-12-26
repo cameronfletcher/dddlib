@@ -92,10 +92,10 @@
     <Reference Include="xunit.execution.desktop, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\packages\xunit.extensibility.execution.2.1.0\lib\net45\xunit.execution.desktop.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
+    <Compile Include="..\dddlib.Tests\Sdk\Feature.cs">
+      <Link>Sdk\Feature.cs</Link>
+    </Compile>
+    <Compile Include="Bug\Bug0075.cs" />
     <Compile Include="Bug\Bug0081.cs" />
     <Compile Include="Bug\Bug0109.cs" />
     <Compile Include="Bug\BugConfiguration.cs" />
