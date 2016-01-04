@@ -12,6 +12,7 @@ namespace dddlib.Persistence.Tests.Bug
         {
             configure.AggregateRoot<Bug0043.Car>().ToReconstituteUsing(() => new Bug0043.Car());
             configure.AggregateRoot<Bug0064.Thing>().ToReconstituteUsing(() => new Bug0064.Thing());
+            configure.AggregateRoot<Bug0072.Subject>().ToUseNaturalKey(subject => subject.Nested.NaturalKey);
         }
     }
 }
