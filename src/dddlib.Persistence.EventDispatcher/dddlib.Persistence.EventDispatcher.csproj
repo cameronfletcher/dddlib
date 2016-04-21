@@ -60,6 +60,7 @@
     </Compile>
     <Compile Include="Guard.cs" />
     <Compile Include="GuardExtensions.cs" />
+    <Compile Include="Memory\MemoryDispatcherRepository.cs" />
     <Compile Include="Memory\MemoryNotificationService.cs" />
     <Compile Include="Sdk\Batch.cs" />
     <Compile Include="Sdk\CustomEventDispatcher.cs" />

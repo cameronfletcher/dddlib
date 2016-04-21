@@ -39,7 +39,7 @@ namespace dddlib.Persistence.EventDispatcher.Tests.Feature
 
         public class CanDispatch : MemoryEventDispatcher
         {
-            [Scenario(Skip = "Not ready yet.")]
+            [Scenario]
             public void Scenario(
                 Subject instance,
                 dddlib.Persistence.EventDispatcher.Sdk.EventDispatcher eventDispatcher,

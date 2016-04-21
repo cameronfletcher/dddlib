@@ -31,12 +31,14 @@ namespace dddlib.Persistence.EventDispatcher.Memory
         private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
         private readonly Dictionary<Guid, List<Event>> eventStreams = new Dictionary<Guid, List<Event>>();
-        private readonly List<Event> store = new List<Event>();
+        private readonly List<Event> eventStore = new List<Event>();
 
         private readonly Mutex mutex;
         private readonly EventWaitHandle waitHandle;
         private readonly MemoryMappedFile file;
-
+#if DISPATCHER
+        private readonly MemoryDispatcherRepository repository;
+#endif
         private long readOffset;
         private long writeOffset;
         private bool isDisposed;
@@ -69,6 +71,9 @@ namespace dddlib.Persistence.EventDispatcher.Memory
 
             // TODO (Cameron): Fix.
             Serializer.RegisterConverters(new[] { new DateTimeConverter() });
+#if DISPATCHER
+            this.repository = new MemoryDispatcherRepository(this);
+#endif
         }
 #if PERSISTENCE
     /// <summary>
@@ -151,7 +156,7 @@ namespace dddlib.Persistence.EventDispatcher.Memory
                         StreamId = streamId,
                         Type = @event.GetType().GetSerializedName(),
                         Payload = payload,
-                        SequenceNumber = this.store.Count + 1,
+                        SequenceNumber = this.eventStore.Count + 1,
                         State = postCommitState = Guid.NewGuid().ToString("N").Substring(0, 8),
                     };
 
@@ -182,7 +187,7 @@ namespace dddlib.Persistence.EventDispatcher.Memory
                 throw new ObjectDisposedException(this.GetType().FullName);
             }
 
-            throw new NotImplementedException();
+            return this.repository.GetNextUndispatchedEventsBatch(dispatcherId, batchSize);
         }
 
         /// <summary>
@@ -197,7 +202,7 @@ namespace dddlib.Persistence.EventDispatcher.Memory
                 throw new ObjectDisposedException(this.GetType().FullName);
             }
 
-            throw new NotImplementedException();
+            this.repository.MarkEventAsDispatched(dispatcherId, sequenceNumber);
         }
 
         /// <summary>
@@ -214,7 +219,7 @@ namespace dddlib.Persistence.EventDispatcher.Memory
 
             this.Synchronize();
 
-            return this.store.Skip((int)sequenceNumber).Select(@event => @event.Payload);
+            return this.eventStore.Skip((int)sequenceNumber).Select(@event => @event.Payload);
         }
 #endif
         /// <summary>
@@ -273,7 +278,7 @@ namespace dddlib.Persistence.EventDispatcher.Memory
                 }
 
                 eventStream.Add(@event);
-                this.store.Add(@event);
+                this.eventStore.Add(@event);
             }
             while (length > 0);
 
