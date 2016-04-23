@@ -80,6 +80,7 @@
     <Compile Include="Sdk\INaturalKeySerializer.cs" />
     <Compile Include="Sdk\ISnapshotStore.cs" />
     <Compile Include="Sdk\MemoryMappedDictionary.cs" />
+    <Compile Include="Sdk\MemoryMappedLog.cs" />
     <Compile Include="Sdk\Snapshot.cs" />
     <Compile Include="SqlServer\SqlServerEventStoreRepository.cs" />
     <Compile Include="SqlServer\SqlServerGuardExtensions.cs" />

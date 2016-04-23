@@ -201,7 +201,7 @@ namespace dddlib.Persistence.EventDispatcher.Sdk
                 // TODO: Deserialize?
                 try
                 {
-                    this.eventDispatcher.Dispatch(@event.Id, @event.Payload);
+                    this.eventDispatcher.Dispatch(@event.SequenceNumber, @event.Payload);
                 }
                 catch (Exception)
                 {
@@ -213,7 +213,7 @@ namespace dddlib.Persistence.EventDispatcher.Sdk
 
                 // NOTE (Cameron): If this fails we will likely double dispatch.
                 // TODO (Cameron): Retry? Fall over?
-                this.eventStore.MarkEventAsDispatched(this.dispatcherId, @event.Id);
+                this.eventStore.MarkEventAsDispatched(this.dispatcherId, @event.SequenceNumber);
             }
         }
     }

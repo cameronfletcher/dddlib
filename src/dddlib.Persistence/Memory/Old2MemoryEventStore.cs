@@ -18,9 +18,10 @@ namespace dddlib.Persistence.Memory
     {
         private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
-        private readonly MemoryMappedLog<MemoryMappedEvent> events = new MemoryMappedLog<MemoryMappedEvent>("Events");
+        private readonly MemoryMappedDictionary<int, MemoryMappedEvent> events = new MemoryMappedDictionary<int, MemoryMappedEvent>("Events");
         private readonly Dictionary<Guid, List<Event>> streams = new Dictionary<Guid, List<Event>>();
 
+        private int currentSequenceNumber;
         private bool isDisposed;
 
         /// <summary>
@@ -98,7 +99,8 @@ namespace dddlib.Persistence.Memory
                 // NOTE (Cameron): Try-catch block retry required for concurrency issues.
                 ////try
                 ////{
-                    this.events.TryAppend(
+                    this.events.Add(
+                        this.events.Count + 1,
                         new MemoryMappedEvent
                         {
                             StreamId = streamId,
@@ -131,9 +133,11 @@ namespace dddlib.Persistence.Memory
 
         private void Synchronize()
         {
-            MemoryMappedEvent memoryMappedEvent;
-            while (this.events.TryRead(out memoryMappedEvent))
+            var sequenceNumbers = this.events.Keys.Skip(this.currentSequenceNumber);
+            foreach (var sequenceNumber in sequenceNumbers)
             {
+                var memoryMappedEvent = this.events[sequenceNumber];
+
                 var stream = default(List<Event>);
                 if (!this.streams.TryGetValue(memoryMappedEvent.StreamId, out stream))
                 {
@@ -143,10 +147,15 @@ namespace dddlib.Persistence.Memory
                 stream.Add(
                     new Event
                     {
-                        SequenceNumber = stream.Count + 1,
+                        SequenceNumber = sequenceNumber,
                         Payload = Serializer.Deserialize(memoryMappedEvent.Payload, Type.GetType(memoryMappedEvent.Type)),
                         State = memoryMappedEvent.State,
                     });
+            }
+
+            if (sequenceNumbers.Any())
+            {
+                this.currentSequenceNumber = sequenceNumbers.Max();
             }
         }
 

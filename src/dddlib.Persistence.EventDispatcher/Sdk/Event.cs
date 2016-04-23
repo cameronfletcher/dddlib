@@ -10,10 +10,10 @@ namespace dddlib.Persistence.EventDispatcher.Sdk
     public class Event
     {
         /// <summary>
-        /// Gets or sets the event identifier.
+        /// Gets or sets the event sequence number.
         /// </summary>
-        /// <value>The event identifier.</value>
-        public long Id { get; set; }
+        /// <value>The event sequence number.</value>
+        public long SequenceNumber { get; set; }
 
         /// <summary>
         /// Gets or sets the event payload.

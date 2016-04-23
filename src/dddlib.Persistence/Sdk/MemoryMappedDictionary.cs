@@ -11,6 +11,7 @@ namespace dddlib.Persistence.EventDispatcher.Sdk
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO.MemoryMappedFiles;
     using System.Linq;
     using System.Security.AccessControl;
@@ -411,6 +412,12 @@ namespace dddlib.Persistence.EventDispatcher.Sdk
 
         private void Synchronize()
         {
+            Trace.TraceInformation(
+                "[{0:00}] MemoryMappedDictionary.Synchronize (writeOffset = {1}, readOffset = {2}",
+                Thread.CurrentThread.ManagedThreadId,
+                this.writeOffset,
+                this.readOffset);
+
             var length = 0;
             do
             {

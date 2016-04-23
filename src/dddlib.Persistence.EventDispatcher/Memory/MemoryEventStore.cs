@@ -16,9 +16,12 @@ namespace dddlib.Persistence.EventDispatcher.Memory
 
         private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
-        private readonly MemoryMappedDictionary<int, MemoryMappedEvent> events = new MemoryMappedDictionary<int, MemoryMappedEvent>("Events");
-        private readonly MemoryMappedDictionary<int, MemoryMappedBatch> batches = new MemoryMappedDictionary<int, MemoryMappedBatch>("Batches");
+        private readonly MemoryMappedLog<MemoryMappedEvent> events = new MemoryMappedLog<MemoryMappedEvent>("Events");
+        private readonly MemoryMappedLog<MemoryMappedBatch> batches = new MemoryMappedLog<MemoryMappedBatch>("Batches");
         private readonly MemoryMappedDictionary<string, long> dispatchedEvents = new MemoryMappedDictionary<string, long>("DispatchedEvents");
+
+        private readonly Dictionary<string, List<Batch>> dispatcherBatches = new Dictionary<string, List<Batch>>();
+        private readonly List<object> eventStore = new List<object>();
 
         private bool isDisposed;
 
@@ -51,14 +54,15 @@ namespace dddlib.Persistence.EventDispatcher.Memory
             var sequenceNumber = Math.Max(dispatchedSequenceNumber, batchedSequenceNumber);
 
             // #3. Create a new batch (if necessary)
-            var batchEvents = this.events.Where(@event => @event.Key >= sequenceNumber)
+            var batchEvents = this.eventStore
+                .Skip((int)sequenceNumber)
                 .Take(batchSize)
                 .Select(
                     @event => 
                     new Event
                     {
-                        Id = @event.Key,
-                        Payload = Serializer.Deserialize(@event.Value.Payload, Type.GetType(@event.Value.Type))
+                        SequenceNumber = this.eventStore.IndexOf(@event) + 1,
+                        Payload = @event,
                     })
                 .ToArray();
 
@@ -111,6 +115,39 @@ namespace dddlib.Persistence.EventDispatcher.Memory
             this.dispatchedEvents.Dispose();
         }
 
+        private void Synchronize()
+        {
+            MemoryMappedEvent memoryMappedEvent;
+            while (this.events.TryRead(out memoryMappedEvent))
+            {
+                var type = Type.GetType(memoryMappedEvent.Type);
+                var @event = Serializer.Deserialize(memoryMappedEvent.Payload, type);
+                this.eventStore.Add(@event);
+            }
+
+            MemoryMappedBatch memoryMappedBatch;
+            while (this.batches.TryRead(out memoryMappedBatch))
+            {
+                List<Batch> incompleteBatches;
+                if (!this.dispatcherBatches.TryGetValue(memoryMappedBatch.DispatcherId, out incompleteBatches))
+                {
+                    this.dispatcherBatches.Add(memoryMappedBatch.DispatcherId, incompleteBatches = new List<Batch>());
+                }
+
+                if (memoryMappedBatch.Complete)
+                {
+                    incompleteBatches.Where(b => b.Id == memoryMappedBatch.Id)
+                        .ToList()
+                        .ForEach(b => )
+                }
+
+                var type = Type.GetType(memoryMappedEvent.Type);
+                var @event = Serializer.Deserialize(memoryMappedEvent.Payload, type);
+                this.eventStore.Add(@event);
+            }
+
+        }
+
         private class MemoryMappedEvent
         {
             public Guid StreamId { get; set; }
@@ -124,6 +161,8 @@ namespace dddlib.Persistence.EventDispatcher.Memory
 
         private class MemoryMappedBatch
         {
+            public long Id { get; set; }
+
             public string DispatcherId { get; set; }
 
             public long SequenceNumber { get; set; }
@@ -131,6 +170,8 @@ namespace dddlib.Persistence.EventDispatcher.Memory
             public long Size { get; set; }
 
             public DateTime Timestamp { get; set; }
+
+            public bool Complete { get; set; }
         }
     }
 }

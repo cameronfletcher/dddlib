@@ -125,7 +125,7 @@ namespace dddlib.Persistence.EventDispatcher.SqlServer
                         events.Add(
                             new Event
                             {
-                                Id = Convert.ToInt64(reader["SequenceNumber"]),
+                                SequenceNumber = Convert.ToInt64(reader["SequenceNumber"]),
                                 Payload = payload,
                             });
                     }

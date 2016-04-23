@@ -52,6 +52,9 @@
     <Compile Include="..\dddlib.Persistence\Sdk\MemoryMappedDictionary.cs">
       <Link>Sdk\MemoryMappedDictionary.cs</Link>
     </Compile>
+    <Compile Include="..\dddlib.Persistence\Sdk\MemoryMappedLog.cs">
+      <Link>Sdk\MemoryMappedLog.cs</Link>
+    </Compile>
     <Compile Include="..\dddlib\Sdk\DateTimeConverter.cs">
       <Link>Sdk\DateTimeConverter.cs</Link>
     </Compile>
