@@ -61,11 +61,12 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AggregateRootNotFoundException.cs" />
-    <Compile Include="Sdk\ExclusiveCodeBlock.cs" />
+    <Compile Include="Memory\MemoryEventStore.cs" />
     <Compile Include="Memory\MemoryEventStoreRepository.cs" />
     <Compile Include="Memory\MemorySnapshotStore.cs" />
     <Compile Include="Sdk\AggregateRootTypeExtensions.cs" />
     <Compile Include="Sdk\EventStoreRepository.cs" />
+    <Compile Include="Sdk\ExclusiveCodeBlock.cs" />
     <Compile Include="Sdk\IEventStore.cs" />
     <Compile Include="IEventStoreRepository.cs" />
     <Compile Include="Sdk\IIdentityMap.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Sdk\DefaultNaturalKeySerializer.cs" />
     <Compile Include="Sdk\INaturalKeySerializer.cs" />
     <Compile Include="Sdk\ISnapshotStore.cs" />
+    <Compile Include="Sdk\MemoryMappedDictionary.cs" />
     <Compile Include="Sdk\Snapshot.cs" />
     <Compile Include="SqlServer\SqlServerEventStoreRepository.cs" />
     <Compile Include="SqlServer\SqlServerGuardExtensions.cs" />
@@ -85,7 +87,6 @@
     <Compile Include="SqlServer\SqlServerIdentityMap.cs" />
     <Compile Include="SqlServer\SqlServerNaturalKeyRepository.cs" />
     <Compile Include="IRepository.cs" />
-    <Compile Include="Memory\MemoryEventStore.cs" />
     <Compile Include="Memory\MemoryIdentityMap.cs" />
     <Compile Include="Memory\MemoryRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

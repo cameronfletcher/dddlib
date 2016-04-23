@@ -49,18 +49,15 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\dddlib.Persistence\Memory\MemoryEventStore.cs">
-      <Link>Memory\MemoryEventStore.cs</Link>
-    </Compile>
-    <Compile Include="..\dddlib.Persistence\Sdk\ExclusiveCodeBlock.cs">
-      <Link>Sdk\ExclusiveCodeBlock.cs</Link>
+    <Compile Include="..\dddlib.Persistence\Sdk\MemoryMappedDictionary.cs">
+      <Link>Sdk\MemoryMappedDictionary.cs</Link>
     </Compile>
     <Compile Include="..\dddlib\Sdk\DateTimeConverter.cs">
       <Link>Sdk\DateTimeConverter.cs</Link>
     </Compile>
     <Compile Include="Guard.cs" />
     <Compile Include="GuardExtensions.cs" />
-    <Compile Include="Memory\MemoryDispatcherRepository.cs" />
+    <Compile Include="Memory\MemoryEventStore.cs" />
     <Compile Include="Memory\MemoryNotificationService.cs" />
     <Compile Include="Sdk\Batch.cs" />
     <Compile Include="Sdk\CustomEventDispatcher.cs" />

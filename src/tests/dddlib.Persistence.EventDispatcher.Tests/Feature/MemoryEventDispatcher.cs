@@ -25,10 +25,10 @@ namespace dddlib.Persistence.EventDispatcher.Tests.Feature
             base.Background();
 
             "Given an identity map"
-                .f(() => this.identityMap = new MemoryIdentityMap());
+                .f(ctx => this.identityMap = new MemoryIdentityMap().Using(ctx));
 
             "And an event store"
-                .f(() => this.eventStore = new MemoryEventStore());
+                .f(ctx => this.eventStore = new MemoryEventStore().Using(ctx));
 
             "And a snapshot store"
                 .f(() => this.snapshotStore = new MemorySnapshotStore());
@@ -47,7 +47,7 @@ namespace dddlib.Persistence.EventDispatcher.Tests.Feature
                 AutoResetEvent notify)
             {
                 "Given a memory event dispatcher"
-                    .f(c =>
+                    .f(ctx =>
                     {
                         notify = new AutoResetEvent(false);
                         eventDispatcher = new Memory.MemoryEventDispatcher(
@@ -55,7 +55,7 @@ namespace dddlib.Persistence.EventDispatcher.Tests.Feature
                             {
                                 newSubject = @event as NewSubject;
                                 notify.Set();
-                            }).Using(c);
+                            }).Using(ctx);
                     });
 
                 "And an instance of an aggregate root"

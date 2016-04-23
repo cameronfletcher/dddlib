@@ -3,9 +3,9 @@
 // </copyright>
 
 #if PERSISTENCE
-namespace dddlib.Persistence.Memory
+namespace dddlib.Persistence.Sdk
 #else
-namespace dddlib.Persistence.EventDispatcher.Memory
+namespace dddlib.Persistence.EventDispatcher.Sdk
 #endif
 {
     using System;

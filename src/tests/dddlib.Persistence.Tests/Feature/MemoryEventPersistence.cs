@@ -30,10 +30,10 @@ namespace dddlib.Persistence.Tests.Feature
             base.Background();
 
             "Given an identity map"
-                .f(() => this.identityMap = new MemoryIdentityMap());
+                .f(ctx => this.identityMap = new MemoryIdentityMap().Using(ctx));
 
             "And an event store"
-                .f(() => this.eventStore = new MemoryEventStore());
+                .f(ctx => this.eventStore = new MemoryEventStore().Using(ctx));
 
             "And a snapshot store"
                 .f(() => this.snapshotStore = new MemorySnapshotStore());

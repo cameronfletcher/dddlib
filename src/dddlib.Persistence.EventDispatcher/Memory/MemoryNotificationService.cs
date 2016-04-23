@@ -5,12 +5,7 @@
 namespace dddlib.Persistence.EventDispatcher.Memory
 {
     using System;
-    using System.IO.MemoryMappedFiles;
-    using System.Security.AccessControl;
-    using System.Security.Principal;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
+    using System.Linq;
     using System.Web.Script.Serialization;
     using dddlib.Persistence.EventDispatcher.Sdk;
 
@@ -18,11 +13,28 @@ namespace dddlib.Persistence.EventDispatcher.Memory
     {
         private static readonly JavaScriptSerializer Serializer = new JavaScriptSerializer();
 
-        private readonly ManualResetEvent resetEvent = new ManualResetEvent(false);
+        private readonly MemoryMappedDictionary<int, MemoryMappedEvent> events = new MemoryMappedDictionary<int, MemoryMappedEvent>("Events", true);
+        private readonly MemoryMappedDictionary<int, MemoryMappedBatch> batches = new MemoryMappedDictionary<int, MemoryMappedBatch>("Batches", true);
+
+        private readonly string dispatcherId;
+
+        private int currentSequenceNumber;
+        private int currentBatchId;
+        private bool isDisposed;
 
         public MemoryNotificationService()
+            : this(MemoryEventStore.NullDispatcherId)
         {
-            Task.Factory.StartNew(this.GetData);
+        }
+
+        public MemoryNotificationService(string dispatcherId)
+        {
+            Guard.Against.NullOrEmpty(() => dispatcherId);
+
+            this.dispatcherId = dispatcherId;
+
+            this.events.OnChange += this.MonitorUndispatchedEvents;
+            this.batches.OnChange += this.MonitorUndispatchedBatches;
         }
 
         public event EventHandler<BatchPreparedEventArgs> OnBatchPrepared;
@@ -31,73 +43,57 @@ namespace dddlib.Persistence.EventDispatcher.Memory
 
         public void Dispose()
         {
-            this.resetEvent.Set();
-            this.resetEvent.Dispose();
+            if (this.isDisposed)
+            {
+                return;
+            }
+
+            this.isDisposed = true;
+
+            this.events.OnChange -= this.MonitorUndispatchedEvents;
+            this.batches.OnChange -= this.MonitorUndispatchedBatches;
+
+            this.events.Dispose();
+            this.batches.Dispose();
         }
 
-        // LINK (Cameron): http://weblogs.asp.net/ricardoperes/local-machine-interprocess-communication-with-net
-        private void GetData()
+        private void MonitorUndispatchedEvents(object sender, EventArgs e)
         {
-            var securitySettings = new EventWaitHandleSecurity();
-            securitySettings.AddAccessRule(
-                new EventWaitHandleAccessRule(
-                new SecurityIdentifier(WellKnownSidType.WorldSid, null),
-                EventWaitHandleRights.FullControl,
-                AccessControlType.Allow));
+            var sequenceNumber = this.events.Count;
+            if (this.currentSequenceNumber == sequenceNumber)
+            {
+                return;
+            }
 
-            var offset = 0L;
+            this.currentSequenceNumber = sequenceNumber;
 
-            var waitHandleCreated = false;
-            using (var waitHandle = new EventWaitHandle(
-                false,
-                EventResetMode.AutoReset,
-                "MemoryNotificationService2",
-                out waitHandleCreated,
-                securitySettings))
-            using (var file = MemoryMappedFile.CreateOrOpen("MemoryEventStore2", 10 * 1024 * 1024 /* 10MB */))
-            { 
-                while (WaitHandle.WaitAny(new WaitHandle[] { this.resetEvent, waitHandle }) == 1)
+            if (this.OnEventCommitted != null)
+            {
+                this.OnEventCommitted.Invoke(this, new EventCommittedEventArgs(this.currentSequenceNumber));
+            }
+        }
+
+        private void MonitorUndispatchedBatches(object sender, EventArgs e)
+        {
+            var nextBatch = 0L;
+            var batchIds = this.batches.Keys.Skip(this.currentBatchId);
+            foreach (var batchId in batchIds)
+            {
+                var batch = this.batches[batchId];
+                if (batch.DispatcherId == this.dispatcherId)
                 {
-                    var sequenceNumber = 0L;
-                    var length = 0;
-                    do
-                    {
-                        using (var accessor = file.CreateViewAccessor(offset, 2))
-                        {
-                            length = accessor.ReadUInt16(0);
-                            if (length == 0)
-                            {
-                                // NOTE (Cameron): Reset event occurred but no changes, so exit.
-                                break;
-                            }
-                        }
-
-                        var buffer = new byte[length];
-                        using (var accessor = file.CreateViewAccessor(offset + 2, length))
-                        {
-                            accessor.ReadArray(0, buffer, 0, length);
-                        }
-
-                        var serializedEvent = Encoding.UTF8.GetString(buffer);
-                        var memoryMappedEvent = Serializer.Deserialize<MemoryMappedEvent>(serializedEvent);
-
-                        sequenceNumber = memoryMappedEvent.SequenceNumber;
-                        offset += 2 + buffer.Length;
-                    }
-                    while (length > 0);
-
-                    if (this.OnEventCommitted != null)
-                    {
-                        this.OnEventCommitted.Invoke(this, new EventCommittedEventArgs(sequenceNumber));
-                    }
-
-                    // HACK (Cameron): Remove.
-                    var batchId = 0;
-                    if (this.OnBatchPrepared != null)
-                    {
-                        this.OnBatchPrepared.Invoke(this, new BatchPreparedEventArgs(batchId));
-                    }
+                    nextBatch = batchId;
                 }
+            }
+
+            if (this.OnBatchPrepared != null)
+            {
+                this.OnBatchPrepared.Invoke(this, new BatchPreparedEventArgs(nextBatch));
+            }
+
+            if (batchIds.Any())
+            {
+                this.currentBatchId = batchIds.Max();
             }
         }
 
@@ -109,9 +105,18 @@ namespace dddlib.Persistence.EventDispatcher.Memory
 
             public string Payload { get; set; }
 
+            public string State { get; set; }
+        }
+
+        private class MemoryMappedBatch
+        {
+            public string DispatcherId { get; set; }
+
             public long SequenceNumber { get; set; }
 
             public string State { get; set; }
+
+            public string Timestamp { get; set; }
         }
     }
 }
