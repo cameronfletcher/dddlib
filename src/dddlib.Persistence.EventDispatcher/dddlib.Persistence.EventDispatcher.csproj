@@ -84,8 +84,8 @@
     <EmbeddedResource Include="Scripts\SqlServerEventDispatcher01.sql" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Meld">
-      <HintPath>..\..\packages\Meld.0.1.0\lib\net45\Meld.dll</HintPath>
+    <Reference Include="Meld, Version=0.2.0.0, Culture=neutral, PublicKeyToken=57dabdd06835ff53, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Meld.0.2.0-alpha19\lib\net45\Meld.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
