@@ -5,6 +5,7 @@
 namespace dddlib.Projections
 {
     using System.Collections.Generic;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Exposes the public members of a repository.
@@ -19,31 +20,31 @@ namespace dddlib.Projections
         /// </summary>
         /// <param name="identity">The identity.</param>
         /// <returns>The entity.</returns>
-        TEntity Get(TIdentity identity);
+        Task<TEntity> GetAsync(TIdentity identity);
 
         /// <summary>
         /// Adds or updates the entity with the specified identity.
         /// </summary>
         /// <param name="identity">The identity.</param>
         /// <param name="entity">The entity to add or update.</param>
-        void AddOrUpdate(TIdentity identity, TEntity entity);
+        Task AddOrUpdateAsync(TIdentity identity, TEntity entity);
 
         /// <summary>
         /// Removes the entity with the specified identity.
         /// </summary>
         /// <param name="identity">The identity.</param>
-        void Remove(TIdentity identity);
+        Task<bool> RemoveAsync(TIdentity identity);
 
         /// <summary>
         /// Purges the contents of repository.
         /// </summary>
-        void Purge();
+        Task PurgeAsync();
 
         /// <summary>
         /// Performs a bulk update against the contents of the repository.
         /// </summary>
         /// <param name="addOrUpdate">The entities to add or update.</param>
         /// <param name="remove">The identities of the entities to remove.</param>
-        void BulkUpdate(IEnumerable<KeyValuePair<TIdentity, TEntity>> addOrUpdate, IEnumerable<TIdentity> remove);
+        Task BulkUpdateAsync(IEnumerable<KeyValuePair<TIdentity, TEntity>> addOrUpdate, IEnumerable<TIdentity> remove);
     }
 }

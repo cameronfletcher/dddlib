@@ -6,6 +6,9 @@ namespace dddlib.Projections.Memory
 {
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using System.Web.Script.Serialization;
+    using dddlib.Projections.Sdk;
 
     /// <summary>
     /// Represents a memory repository.
@@ -13,16 +16,20 @@ namespace dddlib.Projections.Memory
     /// <typeparam name="TIdentity">The type of the identity.</typeparam>
     /// <typeparam name="TEntity">The type of the entity.</typeparam>
     /// <seealso cref="dddlib.Projections.IRepository{TIdentity, TEntity}" />
-    public class MemoryRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>
+    public sealed class MemoryRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>
         where TEntity : class
     {
-        private readonly ConcurrentDictionary<TIdentity, TEntity> entities;
+        // horrible, this object shouldn't be allowed anywhere
+        private static readonly ISerializer DefaultSerializer = new DefaultSerializer();
+
+        private readonly ConcurrentDictionary<TIdentity, byte[]> entities;
+        private readonly ISerializer serializer;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MemoryRepository{TIdentity, TEntity}"/> class.
         /// </summary>
         public MemoryRepository()
-            : this(EqualityComparer<TIdentity>.Default)
+            : this(EqualityComparer<TIdentity>.Default, DefaultSerializer)
         {
         }
 
@@ -30,11 +37,14 @@ namespace dddlib.Projections.Memory
         /// Initializes a new instance of the <see cref="MemoryRepository{TIdentity, TEntity}"/> class.
         /// </summary>
         /// <param name="equalityComparer">The equality comparer.</param>
-        public MemoryRepository(IEqualityComparer<TIdentity> equalityComparer)
+        /// <param name="serializer">The serializer</param>
+        public MemoryRepository(IEqualityComparer<TIdentity> equalityComparer, ISerializer serializer)
         {
             Guard.Against.Null(() => equalityComparer);
+            Guard.Against.Null(() => serializer);
 
-            this.entities = new ConcurrentDictionary<TIdentity, TEntity>(equalityComparer);
+            this.entities = new ConcurrentDictionary<TIdentity, byte[]>(equalityComparer);
+            this.serializer = serializer;
         }
 
         /// <summary>
@@ -42,47 +52,33 @@ namespace dddlib.Projections.Memory
         /// </summary>
         /// <param name="identity">The identity.</param>
         /// <returns>The entity.</returns>
-        public virtual TEntity Get(TIdentity identity)
-        {
-            TEntity entity;
-            return this.entities.TryGetValue(identity, out entity) ? entity : default(TEntity);
-        }
-
-        /// <summary>
-        /// Gets all the entities.
-        /// </summary>
-        /// <returns>All the entities.</returns>
-        public virtual IEnumerable<KeyValuePair<TIdentity, TEntity>> GetAll()
-        {
-            return this.entities;
-        }
+        public async Task<TEntity> GetAsync(TIdentity identity) => this.entities.TryGetValue(identity, out var serializedEntity) ? await this.serializer.DeserializeAsync<TEntity>(serializedEntity) : null;
 
         /// <summary>
         /// Adds or updates the entity with the specified identity.
         /// </summary>
         /// <param name="identity">The identity.</param>
         /// <param name="entity">The entity to add or update.</param>
-        public virtual void AddOrUpdate(TIdentity identity, TEntity entity)
+        public async Task AddOrUpdateAsync(TIdentity identity, TEntity entity)
         {
-            this.entities.AddOrUpdate(identity, entity, (i, e) => entity);
+            var serializedEntity = await this.serializer.SerializeAsync(entity);
+            this.entities.AddOrUpdate(identity, serializedEntity, (i, e) => serializedEntity);
         }
 
         /// <summary>
         /// Removes the entity with the specified identity.
         /// </summary>
         /// <param name="identity">The identity.</param>
-        public virtual void Remove(TIdentity identity)
-        {
-            TEntity entity;
-            this.entities.TryRemove(identity, out entity);
-        }
+        /// <returns>Returns <c>true</c> if the entity was successfully removed; otherwise <c>false</c>.</returns>
+        public Task<bool> RemoveAsync(TIdentity identity) => Task.FromResult(this.entities.TryRemove(identity, out _));
 
         /// <summary>
         /// Purges the contents of repository.
         /// </summary>
-        public virtual void Purge()
+        public Task PurgeAsync()
         {
             this.entities.Clear();
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -90,17 +86,17 @@ namespace dddlib.Projections.Memory
         /// </summary>
         /// <param name="addOrUpdate">The entities to add or update.</param>
         /// <param name="remove">The identities of the entities to remove.</param>
-        public virtual void BulkUpdate(IEnumerable<KeyValuePair<TIdentity, TEntity>> addOrUpdate, IEnumerable<TIdentity> remove)
+        public async Task BulkUpdateAsync(IEnumerable<KeyValuePair<TIdentity, TEntity>> addOrUpdate, IEnumerable<TIdentity> remove)
         {
             foreach (var item in addOrUpdate)
             {
-                this.entities.AddOrUpdate(item.Key, item.Value, (i, e) => item.Value);
+                var serializedEntity = await this.serializer.SerializeAsync(item.Value);
+                this.entities.AddOrUpdate(item.Key, serializedEntity, (i, e) => serializedEntity);
             }
 
-            TEntity entity = null;
             foreach (var identity in remove)
             {
-                this.entities.TryRemove(identity, out entity);
+                this.entities.TryRemove(identity, out _);
             }
         }
     }
